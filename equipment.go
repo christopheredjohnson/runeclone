@@ -1,0 +1,37 @@
+package main
+
+type EquipmentSlot string
+
+const (
+	SlotHead   EquipmentSlot = "Head"
+	SlotBody   EquipmentSlot = "Body"
+	SlotLegs   EquipmentSlot = "Legs"
+	SlotWeapon EquipmentSlot = "Weapon"
+	SlotShield EquipmentSlot = "Shield"
+)
+
+type Equipment struct {
+	Slots map[EquipmentSlot]ItemSlot
+}
+
+func NewEquipment() *Equipment {
+	return &Equipment{
+		Slots: map[EquipmentSlot]ItemSlot{
+			SlotHead:   {},
+			SlotBody:   {},
+			SlotLegs:   {},
+			SlotWeapon: {},
+			SlotShield: {},
+		},
+	}
+}
+
+func (e *Equipment) Equip(slot EquipmentSlot, item ItemSlot) {
+	e.Slots[slot] = item
+}
+
+func (e *Equipment) Unequip(slot EquipmentSlot) ItemSlot {
+	item := e.Slots[slot]
+	e.Slots[slot] = ItemSlot{}
+	return item
+}
