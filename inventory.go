@@ -3,6 +3,7 @@ package main
 type ItemSlot struct {
 	Name  string
 	Count int
+	Type  string // e.g. "Weapon", "Shield", "Body"
 }
 
 type Inventory struct {
@@ -13,19 +14,50 @@ func NewInventory() *Inventory {
 	return &Inventory{}
 }
 
-// Adds item to first matching or empty slot
-func (inv *Inventory) Add(item string, amount int) {
+func (inv *Inventory) Add(slot ItemSlot) {
 	for i := 0; i < len(inv.slots); i++ {
-		slot := &inv.slots[i]
-		if slot.Name == item || slot.Name == "" {
-			slot.Name = item
-			slot.Count += amount
+		s := &inv.slots[i]
+		if s.Name == slot.Name || s.Name == "" {
+			if s.Name == "" {
+				*s = slot
+			} else {
+				s.Count += slot.Count
+			}
 			return
 		}
 	}
 }
 
-// Get slots (for display)
+func (inv *Inventory) AddByName(name string, count int, itemType string) {
+	inv.Add(ItemSlot{Name: name, Count: count, Type: itemType})
+}
+
+func (inv *Inventory) Get(index int) ItemSlot {
+	if index < 0 || index >= len(inv.slots) {
+		return ItemSlot{}
+	}
+	return inv.slots[index]
+}
+
+func (inv *Inventory) Set(index int, slot ItemSlot) {
+	if index < 0 || index >= len(inv.slots) {
+		return
+	}
+	inv.slots[index] = slot
+}
+
 func (inv *Inventory) Slots() [28]ItemSlot {
 	return inv.slots
+}
+
+func inferItemType(name string) string {
+	switch name {
+	case "Logs":
+		return "Material"
+	case "Ore":
+		return "Material"
+	case "Fish":
+		return "Food"
+	}
+	return "Misc"
 }

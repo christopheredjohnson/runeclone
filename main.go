@@ -11,8 +11,29 @@ var (
 )
 
 func Update() {
-	// Handle input
-	if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+	clickedIndex, clickedUI := -1, false
+
+	if showInventory {
+		clickedIndex, clickedUI = player.CheckInventoryClick(10, 10)
+
+		if clickedIndex >= 0 {
+			item := player.Inventory.Get(clickedIndex)
+			slot := mapItemTypeToSlot(item.Type)
+
+			if slot != "" {
+				swapped := player.Equipment.Unequip(slot)
+				player.Inventory.Set(clickedIndex, ItemSlot{}) // remove old item
+				player.Equipment.Equip(slot, item)
+
+				if swapped.Name != "" {
+					player.Inventory.Add(swapped)
+				}
+			}
+		}
+	}
+
+	// Only click map if not interacting with UI
+	if !clickedUI && rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 		mouse := rl.GetMousePosition()
 		tileX := int(mouse.X) / TileSize
 		tileY := int(mouse.Y) / TileSize
@@ -25,6 +46,13 @@ func Update() {
 		}
 	}
 
+	if clickedSlot, ok := player.CheckEquipmentClick(400, 10); ok {
+		item := player.Equipment.Unequip(clickedSlot)
+		if item.Name != "" {
+			player.Inventory.Add(item)
+		}
+	}
+
 	if rl.IsKeyPressed(rl.KeyB) {
 		showInventory = !showInventory
 	}
@@ -33,7 +61,6 @@ func Update() {
 }
 
 func Draw() {
-	// Draw
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.RayWhite)
 
@@ -43,6 +70,37 @@ func Draw() {
 	if showInventory {
 		player.DrawInventory(10, 10)
 		player.DrawEquipment(400, 10)
+
+		hovered := player.GetHoveredInventoryIndex(10, 10)
+		if hovered >= 0 {
+			item := player.Inventory.Get(hovered)
+			if item.Name != "" {
+				mouse := rl.GetMousePosition()
+				text := item.Name
+				textWidth := rl.MeasureText(text, 16)
+				padding := 4
+				rect := rl.NewRectangle(mouse.X, mouse.Y-24, float32(textWidth+int32(padding)*2), 20)
+
+				rl.DrawRectangleRec(rect, rl.Fade(rl.Black, 0.8))
+				rl.DrawText(text, int32(mouse.X+float32(padding)), int32(mouse.Y-20), 16, rl.White)
+			}
+		}
+
+		// After inventory tooltip
+		hoveredEq := player.GetHoveredEquipmentSlot(400, 10)
+		if hoveredEq != "" {
+			item := player.Equipment.Slots[hoveredEq]
+			if item.Name != "" {
+				mouse := rl.GetMousePosition()
+				text := item.Name
+				textWidth := rl.MeasureText(text, 16)
+				padding := 4
+				rect := rl.NewRectangle(mouse.X, mouse.Y-24, float32(textWidth+int32(padding)*2), 20)
+
+				rl.DrawRectangleRec(rect, rl.Fade(rl.Black, 0.8))
+				rl.DrawText(text, int32(mouse.X+float32(padding)), int32(mouse.Y-20), 16, rl.White)
+			}
+		}
 	}
 
 	if player.Gathering {
@@ -65,9 +123,10 @@ func main() {
 		gameMap,
 	)
 
+	player.Inventory.Add(ItemSlot{Name: "Iron Sword", Count: 1, Type: "Weapon"})
+
 	for !rl.WindowShouldClose() {
 		Update()
-
 		Draw()
 	}
 

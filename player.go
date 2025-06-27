@@ -148,11 +148,9 @@ func (p *Player) DrawInventory(x, y int) {
 		cy := y + (i/columns)*(boxSize+4)
 		rect := rl.NewRectangle(float32(cx), float32(cy), float32(boxSize), float32(boxSize))
 
-		// Draw box
 		rl.DrawRectangleRec(rect, rl.LightGray)
 		rl.DrawRectangleLinesEx(rect, 1, rl.DarkGray)
 
-		// Draw count and item name if slot has item
 		if slot.Name != "" {
 			rl.DrawText(slot.Name[:1], int32(cx+4), int32(cy+2), 20, rl.Black)
 			rl.DrawText(fmt.Sprintf("%d", slot.Count), int32(cx+4), int32(cy+20), 16, rl.DarkBlue)
@@ -219,7 +217,11 @@ func (p *Player) FinishGather() {
 	}
 
 	// Add item to inventory
-	p.Inventory.Add(p.GatherItem, 1)
+	p.Inventory.Add(ItemSlot{
+		Name:  p.GatherItem,
+		Count: 1,
+		Type:  inferItemType(p.GatherItem),
+	})
 
 	p.Gathering = false
 	p.GatherLabel = ""
@@ -254,4 +256,100 @@ func (p *Player) DrawEquipment(x, y int) {
 			rl.DrawText(item.Name[:1], int32(cx+4), int32(cy+2), 20, rl.Black)
 		}
 	}
+}
+
+func (p *Player) CheckInventoryClick(x, y int) (clickedIndex int, clickedUI bool) {
+	slots := p.Inventory.Slots()
+	boxSize := 40
+	columns := 7
+	mouse := rl.GetMousePosition()
+
+	clickedIndex = -1
+
+	for i := range slots {
+		cx := x + (i%columns)*(boxSize+4)
+		cy := y + (i/columns)*(boxSize+4)
+		rect := rl.NewRectangle(float32(cx), float32(cy), float32(boxSize), float32(boxSize))
+
+		if rl.CheckCollisionPointRec(mouse, rect) {
+			clickedUI = true
+			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+				clickedIndex = i
+			}
+		}
+	}
+
+	return clickedIndex, clickedUI
+}
+
+func (p *Player) GetHoveredInventoryIndex(x, y int) int {
+	slots := p.Inventory.Slots()
+	boxSize := 40
+	columns := 7
+	mouse := rl.GetMousePosition()
+
+	for i := range slots {
+		cx := x + (i%columns)*(boxSize+4)
+		cy := y + (i/columns)*(boxSize+4)
+		rect := rl.NewRectangle(float32(cx), float32(cy), float32(boxSize), float32(boxSize))
+
+		if rl.CheckCollisionPointRec(mouse, rect) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (p *Player) CheckEquipmentClick(x, y int) (EquipmentSlot, bool) {
+	boxSize := 40
+	padding := 4
+
+	slotOrder := []EquipmentSlot{
+		SlotHead,
+		SlotBody,
+		SlotLegs,
+		SlotWeapon,
+		SlotShield,
+	}
+
+	mouse := rl.GetMousePosition()
+
+	for i, slot := range slotOrder {
+		cx := x
+		cy := y + i*(boxSize+padding)
+		rect := rl.NewRectangle(float32(cx), float32(cy), float32(boxSize), float32(boxSize))
+
+		if rl.CheckCollisionPointRec(mouse, rect) && rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+			return slot, true
+		}
+	}
+
+	return "", false
+}
+
+func (p *Player) GetHoveredEquipmentSlot(x, y int) EquipmentSlot {
+	boxSize := 40
+	padding := 4
+
+	slotOrder := []EquipmentSlot{
+		SlotHead,
+		SlotBody,
+		SlotLegs,
+		SlotWeapon,
+		SlotShield,
+	}
+
+	mouse := rl.GetMousePosition()
+
+	for i, slot := range slotOrder {
+		cx := x
+		cy := y + i*(boxSize+padding)
+		rect := rl.NewRectangle(float32(cx), float32(cy), float32(boxSize), float32(boxSize))
+		if rl.CheckCollisionPointRec(mouse, rect) {
+			return slot
+		}
+	}
+
+	return ""
 }

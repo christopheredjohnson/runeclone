@@ -35,3 +35,19 @@ func (e *Equipment) Unequip(slot EquipmentSlot) ItemSlot {
 	e.Slots[slot] = ItemSlot{}
 	return item
 }
+
+func mapItemTypeToSlot(itemType string) EquipmentSlot {
+	switch itemType {
+	case "Weapon":
+		return SlotWeapon
+	case "Shield":
+		return SlotShield
+	case "Head":
+		return SlotHead
+	case "Body":
+		return SlotBody
+	case "Legs":
+		return SlotLegs
+	}
+	return ""
+}
