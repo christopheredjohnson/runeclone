@@ -1,4 +1,4 @@
-module runclone
+module runeclone
 
 go 1.24.4
 
