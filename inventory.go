@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
+
 type ItemSlot struct {
 	Name  string
 	Count int
@@ -60,4 +66,74 @@ func inferItemType(name string) string {
 		return "Food"
 	}
 	return "Misc"
+}
+
+func (inv *Inventory) HasItems(requirements []ItemSlot) bool {
+	for _, req := range requirements {
+		count := 0
+		for _, slot := range inv.slots {
+			if slot.Name == req.Name {
+				count += slot.Count
+			}
+		}
+		if count < req.Count {
+			return false
+		}
+	}
+	return true
+}
+
+func (inv *Inventory) ConsumeItems(requirements []ItemSlot) {
+	for _, req := range requirements {
+		remaining := req.Count
+		for i := range inv.slots {
+			slot := &inv.slots[i]
+			if slot.Name == req.Name {
+				if slot.Count > remaining {
+					slot.Count -= remaining
+					break
+				} else {
+					remaining -= slot.Count
+					slot.Name = ""
+					slot.Count = 0
+				}
+			}
+		}
+	}
+}
+
+func drawCraftingUI(x, y int) {
+	boxWidth := 180
+	boxHeight := 24
+	padding := 6
+	mouse := rl.GetMousePosition()
+
+	for i, recipe := range Recipes {
+		rect := rl.NewRectangle(float32(x), float32(y+i*(boxHeight+padding)), float32(boxWidth), float32(boxHeight))
+
+		// Check if player can craft
+		canCraft := player.Inventory.HasItems(recipe.Inputs)
+
+		bg := rl.Gray
+		if canCraft {
+			bg = rl.LightGray
+		}
+		if rl.CheckCollisionPointRec(mouse, rect) {
+
+			bg = rl.DarkGray
+			if rl.IsMouseButtonPressed(rl.MouseLeftButton) && canCraft {
+				player.TryCraft(recipe)
+			}
+
+			tooltip := ""
+			for _, input := range recipe.Inputs {
+				tooltip += fmt.Sprintf("%dx %s\n", input.Count, input.Name)
+			}
+			rl.DrawText(tooltip, int32(mouse.X+8), int32(mouse.Y+8), 16, rl.DarkBlue)
+		}
+
+		rl.DrawRectangleRec(rect, bg)
+		rl.DrawRectangleLinesEx(rect, 1, rl.Black)
+		rl.DrawText(recipe.Name, int32(rect.X+6), int32(rect.Y+4), 16, rl.Black)
+	}
 }

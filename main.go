@@ -8,6 +8,16 @@ var (
 	player        Player
 	gameMap       *Map
 	showInventory bool
+	Recipes       = []Recipe{
+		{
+			Name: "Bronze Sword",
+			Inputs: []ItemSlot{
+				{Name: "Ore", Count: 2},
+				{Name: "Logs", Count: 1},
+			},
+			Output: ItemSlot{Name: "Bronze Sword", Count: 1, Type: "Weapon"},
+		},
+	}
 )
 
 func Update() {
@@ -30,6 +40,14 @@ func Update() {
 				}
 			}
 		}
+
+		if slot, eqClicked := player.CheckEquipmentClick(400, 10); eqClicked {
+			clickedUI = true // <- mark UI was clicked
+			item := player.Equipment.Unequip(slot)
+			if item.Name != "" {
+				player.Inventory.Add(item)
+			}
+		}
 	}
 
 	// Only click map if not interacting with UI
@@ -43,13 +61,6 @@ func Update() {
 			player.TryGatherAt(tileX, tileY)
 		} else {
 			player.MoveToTile(tileX, tileY)
-		}
-	}
-
-	if clickedSlot, ok := player.CheckEquipmentClick(400, 10); ok {
-		item := player.Equipment.Unequip(clickedSlot)
-		if item.Name != "" {
-			player.Inventory.Add(item)
 		}
 	}
 
@@ -101,6 +112,8 @@ func Draw() {
 				rl.DrawText(text, int32(mouse.X+float32(padding)), int32(mouse.Y-20), 16, rl.White)
 			}
 		}
+
+		drawCraftingUI(600, 10) // adjust x/y as needed
 	}
 
 	if player.Gathering {
@@ -122,8 +135,6 @@ func main() {
 		float32((SpawnY+SpawnHeight/2)*TileSize),
 		gameMap,
 	)
-
-	player.Inventory.Add(ItemSlot{Name: "Iron Sword", Count: 1, Type: "Weapon"})
 
 	for !rl.WindowShouldClose() {
 		Update()

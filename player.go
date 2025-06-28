@@ -353,3 +353,12 @@ func (p *Player) GetHoveredEquipmentSlot(x, y int) EquipmentSlot {
 
 	return ""
 }
+
+func (p *Player) TryCraft(recipe Recipe) bool {
+	if p.Inventory.HasItems(recipe.Inputs) {
+		p.Inventory.ConsumeItems(recipe.Inputs)
+		p.Inventory.Add(recipe.Output)
+		return true
+	}
+	return false
+}
