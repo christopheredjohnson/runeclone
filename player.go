@@ -6,6 +6,16 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+var gatherSettings = map[int]struct {
+	Label string
+	Item  string
+	Time  float32
+}{
+	TileTree:  {"Chopping...", "Logs", 2.0},
+	TileRock:  {"Mining...", "Ore", 2.5},
+	TileWater: {"Fishing...", "Fish", 3.0},
+}
+
 type Player struct {
 	Pos           rl.Vector2
 	Size          rl.Vector2
@@ -199,20 +209,18 @@ func (p *Player) TryGatherAt(tileX, tileY int) {
 
 func (p *Player) startGather(tileX, tileY int) {
 	p.Gathering = true
-	p.GatherTimer = 2.0
 	p.GatherTarget = Point{tileX, tileY}
 
 	tile := p.Map.GetTile(tileX, tileY)
-	switch tile.Type {
-	case TileTree:
-		p.GatherLabel = "Chopping..."
-		p.GatherItem = "Logs"
-	case TileRock:
-		p.GatherLabel = "Mining..."
-		p.GatherItem = "Ore"
-	case TileWater:
-		p.GatherLabel = "Fishing..."
-		p.GatherItem = "Fish"
+
+	if settings, ok := gatherSettings[tile.Type]; ok {
+		p.Gathering = true
+		p.GatherTarget = Point{tileX, tileY}
+		p.GatherLabel = settings.Label
+		p.GatherItem = settings.Item
+		p.GatherTimer = settings.Time
+	} else {
+		fmt.Println("Invalid gather target")
 	}
 }
 
