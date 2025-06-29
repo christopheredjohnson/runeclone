@@ -17,13 +17,6 @@ var (
 			},
 			Output: ItemSlot{Name: "Sword", Count: 1, Type: "Weapon"},
 		},
-		{
-			Name: "Log Suit",
-			Inputs: []ItemSlot{
-				{Name: "Logs", Count: 4},
-			},
-			Output: ItemSlot{Name: "Log Suit", Count: 1, Type: "Body"},
-		},
 	}
 )
 
@@ -140,6 +133,10 @@ func main() {
 
 	characterTilemap := rl.LoadTexture("assets/rogues.png")
 	defer rl.UnloadTexture(characterTilemap)
+
+	itemTexture := rl.LoadTexture("assets/items.png")
+
+	defer rl.UnloadTexture(itemTexture)
 	gameMap = NewMap(20, 15)
 	gameMap.Generate(0.1, 0.05, 0.05)
 
@@ -148,9 +145,29 @@ func main() {
 		float32((SpawnY+SpawnHeight/2)*TileSize),
 		gameMap,
 		characterTilemap,
+		itemTexture,
 	)
 
-	player.Inventory.Add(ItemSlot{Name: "Leather Body", Count: 1, Type: "Body"})
+	player.Inventory.Add(ItemSlot{
+		Name:      "Leather Body",
+		Count:     1,
+		Type:      "Body",
+		FrameRect: rl.NewRectangle(0, 385, TileSize, TileSize),
+	})
+
+	player.Inventory.Add(ItemSlot{
+		Name:      "Sword",
+		Count:     1,
+		Type:      "Weapon",
+		FrameRect: rl.NewRectangle(0, 32, TileSize, TileSize),
+	})
+
+	player.Inventory.Add(ItemSlot{
+		Name:      "Club",
+		Count:     1,
+		Type:      "Weapon",
+		FrameRect: rl.NewRectangle(0, 256, TileSize, TileSize),
+	})
 
 	for !rl.WindowShouldClose() {
 		Update()

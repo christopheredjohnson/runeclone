@@ -7,17 +7,21 @@ import (
 )
 
 type ItemSlot struct {
-	Name  string
-	Count int
-	Type  string // e.g. "Weapon", "Shield", "Body"
+	Name      string
+	Count     int
+	Type      string // e.g. "Weapon", "Shield", "Body"
+	FrameRect rl.Rectangle
 }
 
 type Inventory struct {
-	slots [28]ItemSlot
+	slots        [28]ItemSlot
+	ItemsTexture rl.Texture2D
 }
 
-func NewInventory() *Inventory {
-	return &Inventory{}
+func NewInventory(texture rl.Texture2D) *Inventory {
+	return &Inventory{
+		ItemsTexture: texture,
+	}
 }
 
 func (inv *Inventory) Add(slot ItemSlot) {

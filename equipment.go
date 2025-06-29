@@ -28,16 +28,18 @@ func NewEquipment() *Equipment {
 
 func (e *Equipment) Equip(slot EquipmentSlot, item ItemSlot) ItemSlot {
 	e.Slots[slot] = ItemSlot{
-		Name:  item.Name,
-		Type:  item.Type,
-		Count: 1,
+		Name:      item.Name,
+		Type:      item.Type,
+		Count:     1,
+		FrameRect: item.FrameRect,
 	}
 	// Return the remaining stack (if any)
 	if item.Count > 1 {
 		return ItemSlot{
-			Name:  item.Name,
-			Type:  item.Type,
-			Count: item.Count - 1,
+			Name:      item.Name,
+			Type:      item.Type,
+			Count:     item.Count - 1,
+			FrameRect: item.FrameRect,
 		}
 	}
 	return ItemSlot{}
