@@ -23,6 +23,8 @@ type Player struct {
 	PendingGather *Point
 	Equipment     *Equipment
 	Texture       rl.Texture2D
+	Health        int
+	MaxHealth     int
 }
 
 func NewPlayer(x, y float32, m *Map, texture rl.Texture2D, itemTexture rl.Texture2D) Player {
@@ -36,6 +38,8 @@ func NewPlayer(x, y float32, m *Map, texture rl.Texture2D, itemTexture rl.Textur
 		Inventory: NewInventory(itemTexture),
 		Equipment: NewEquipment(),
 		Texture:   texture,
+		Health:    100,
+		MaxHealth: 100,
 	}
 }
 
@@ -158,7 +162,7 @@ func (p *Player) DrawInventory(x, y int) {
 		rl.DrawRectangleLinesEx(rect, 1, rl.DarkGray)
 
 		if slot.Name != "" {
-			// rl.DrawText(slot.Name[:1], int32(cx+4), int32(cy+2), 20, rl.Black)
+			rl.DrawText(slot.Name[:1], int32(cx+4), int32(cy+2), 20, rl.Black)
 
 			rl.DrawTextureRec(player.Inventory.ItemsTexture, slot.FrameRect, rl.NewVector2(float32(cx), float32(cy)), rl.White)
 			rl.DrawText(fmt.Sprintf("%d", slot.Count), int32(cx+4), int32(cy+20), 16, rl.DarkBlue)

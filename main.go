@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -18,6 +20,10 @@ var (
 			Output: ItemSlot{Name: "Sword", Count: 1, Type: "Weapon"},
 		},
 	}
+	enemies      []Enemy
+	inCombat     bool
+	currentEnemy *Enemy
+	playerTurn   bool
 )
 
 func Update() {
@@ -69,7 +75,53 @@ func Update() {
 		showInventory = !showInventory
 	}
 
+	if !inCombat {
+		for i := range enemies {
+			dist := rl.Vector2Distance(player.Pos, enemies[i].Pos)
+			if dist < float32(TileSize) {
+				currentEnemy = &enemies[i]
+				inCombat = true
+				playerTurn = true
+				break
+			}
+		}
+	}
+
+	if inCombat && currentEnemy != nil {
+		if playerTurn {
+			if rl.IsKeyPressed(rl.KeyF) { // Player chooses to attack
+				currentEnemy.Health -= 10
+				fmt.Println("Player attacks:", currentEnemy.Name)
+
+				if currentEnemy.Health <= 0 {
+					fmt.Println("Enemy defeated!")
+					inCombat = false
+					currentEnemy = nil
+				} else {
+					playerTurn = false
+				}
+			}
+		} else {
+			// Enemy turn
+			player.Health -= 5
+			fmt.Println("Enemy attacks player!")
+
+			if player.Health <= 0 {
+				fmt.Println("You died!")
+				// Optional: reset game or show death screen
+			}
+			playerTurn = true
+		}
+	}
 	player.Update(rl.GetFrameTime())
+
+	alive := enemies[:0]
+	for _, e := range enemies {
+		if e.Health > 0 {
+			alive = append(alive, e)
+		}
+	}
+	enemies = alive
 }
 
 func Draw(tilemap rl.Texture2D) {
@@ -121,6 +173,23 @@ func Draw(tilemap rl.Texture2D) {
 		rl.DrawText(player.GatherLabel, 10, ScreenHeight-30, 20, rl.Black)
 	}
 
+	for _, enemy := range enemies {
+		enemy.Draw()
+	}
+
+	if inCombat && currentEnemy != nil {
+		msg := "Combat with " + currentEnemy.Name
+		turn := "Your turn: Press F to attack"
+		if !playerTurn {
+			turn = "Enemy is attacking..."
+		}
+
+		rl.DrawText(msg, 10, ScreenHeight-60, 20, rl.Red)
+		rl.DrawText(turn, 10, ScreenHeight-40, 20, rl.DarkGray)
+	}
+
+	rl.DrawText(fmt.Sprintf("HP: %d/%d", player.Health, player.MaxHealth), 10, 10, 20, rl.Black)
+
 	rl.EndDrawing()
 }
 
@@ -135,8 +204,11 @@ func main() {
 	defer rl.UnloadTexture(characterTilemap)
 
 	itemTexture := rl.LoadTexture("assets/items.png")
-
 	defer rl.UnloadTexture(itemTexture)
+
+	enemyTex := rl.LoadTexture("assets/monsters.png")
+	defer rl.UnloadTexture(enemyTex)
+
 	gameMap = NewMap(20, 15)
 	gameMap.Generate(0.1, 0.05, 0.05)
 
@@ -148,25 +220,13 @@ func main() {
 		itemTexture,
 	)
 
-	player.Inventory.Add(ItemSlot{
-		Name:      "Leather Body",
-		Count:     1,
-		Type:      "Body",
-		FrameRect: rl.NewRectangle(0, 385, TileSize, TileSize),
-	})
-
-	player.Inventory.Add(ItemSlot{
-		Name:      "Sword",
-		Count:     1,
-		Type:      "Weapon",
-		FrameRect: rl.NewRectangle(0, 32, TileSize, TileSize),
-	})
-
-	player.Inventory.Add(ItemSlot{
-		Name:      "Club",
-		Count:     1,
-		Type:      "Weapon",
-		FrameRect: rl.NewRectangle(0, 256, TileSize, TileSize),
+	enemies = append(enemies, Enemy{
+		Pos:       rl.NewVector2(100, 100),
+		Health:    50,
+		MaxHealth: 50,
+		Name:      "Slime",
+		Texture:   enemyTex,
+		Frame:     rl.NewRectangle(0, 64, TileSize, TileSize),
 	})
 
 	for !rl.WindowShouldClose() {
