@@ -18,7 +18,7 @@ var (
 				{Name: "Ore", Count: 2},
 				{Name: "Logs", Count: 1},
 			},
-			Output: ItemSlot{Name: "Sword", Count: 1, Type: "Weapon"},
+			Output: ItemSlot{Name: "Sword", Count: 1, Type: "Weapon", FrameRect: rl.NewRectangle(0, 0, 32, 32)},
 		},
 	}
 	enemies          []Enemy
@@ -116,6 +116,14 @@ func Update() {
 						}
 					}
 
+					alive := enemies[:0]
+					for _, e := range enemies {
+						if e.Health > 0 {
+							alive = append(alive, e)
+						}
+					}
+					enemies = alive
+
 					inCombat = false
 					currentEnemy = nil
 					return
@@ -143,14 +151,6 @@ func Update() {
 	}
 
 	player.Update(rl.GetFrameTime())
-
-	alive := enemies[:0]
-	for _, e := range enemies {
-		if e.Health > 0 {
-			alive = append(alive, e)
-		}
-	}
-	enemies = alive
 }
 
 func Draw(tilemap rl.Texture2D) {
@@ -226,7 +226,7 @@ func Draw(tilemap rl.Texture2D) {
 }
 
 func main() {
-	rl.InitWindow(ScreenWidth, ScreenHeight, "Encapsulated Player Example")
+	rl.InitWindow(ScreenWidth, ScreenHeight, "RuneClone")
 	rl.SetTargetFPS(60)
 
 	tilemap := rl.LoadTexture("assets/tiles.png")
@@ -271,9 +271,10 @@ func main() {
 			},
 			{
 				Item: ItemSlot{
-					Name:  "Coins",
-					Count: 5,
-					Type:  "Misc",
+					Name:      "Coins",
+					Count:     5,
+					Type:      "Misc",
+					FrameRect: rl.NewRectangle(32, 768, TileSize, TileSize),
 				},
 				Chance: 0.7, // 70% chance
 			},
