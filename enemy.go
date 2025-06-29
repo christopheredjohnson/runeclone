@@ -2,6 +2,11 @@ package main
 
 import rl "github.com/gen2brain/raylib-go/raylib"
 
+type LootEntry struct {
+	Item   ItemSlot
+	Chance float32 // 0.0 to 1.0
+}
+
 type Enemy struct {
 	Pos       rl.Vector2
 	Texture   rl.Texture2D
@@ -9,6 +14,7 @@ type Enemy struct {
 	Health    int
 	MaxHealth int
 	Name      string
+	LootTable []LootEntry
 }
 
 func (e *Enemy) Draw() {

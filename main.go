@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -20,13 +21,22 @@ var (
 			Output: ItemSlot{Name: "Sword", Count: 1, Type: "Weapon"},
 		},
 	}
-	enemies      []Enemy
-	inCombat     bool
-	currentEnemy *Enemy
-	playerTurn   bool
+	enemies          []Enemy
+	inCombat         bool
+	currentEnemy     *Enemy
+	playerTurn       bool
+	combatTimer      float32
+	combatInterval   = float32(1.0) // seconds per turn
+	lootMessage      string
+	lootMessageTimer float32
 )
 
 func Update() {
+
+	if lootMessageTimer > 0 {
+		lootMessageTimer -= rl.GetFrameTime()
+	}
+
 	clickedIndex, clickedUI := -1, false
 
 	if showInventory {
@@ -77,42 +87,61 @@ func Update() {
 
 	if !inCombat {
 		for i := range enemies {
-			dist := rl.Vector2Distance(player.Pos, enemies[i].Pos)
-			if dist < float32(TileSize) {
-				currentEnemy = &enemies[i]
+			if rl.Vector2Distance(player.Pos, enemies[i].Pos) < float32(TileSize) {
 				inCombat = true
+				currentEnemy = &enemies[i]
 				playerTurn = true
+				combatTimer = combatInterval
 				break
 			}
 		}
 	}
 
 	if inCombat && currentEnemy != nil {
-		if playerTurn {
-			if rl.IsKeyPressed(rl.KeyF) { // Player chooses to attack
+		combatTimer -= rl.GetFrameTime()
+		if combatTimer <= 0 {
+			if playerTurn {
 				currentEnemy.Health -= 10
-				fmt.Println("Player attacks:", currentEnemy.Name)
+				fmt.Println("Player hits", currentEnemy.Name, "for 10 damage")
 
 				if currentEnemy.Health <= 0 {
-					fmt.Println("Enemy defeated!")
+					fmt.Println(currentEnemy.Name, "is defeated!")
+
+					for _, loot := range currentEnemy.LootTable {
+						if rand.Float32() <= loot.Chance {
+							player.Inventory.Add(loot.Item)
+							fmt.Printf("Looted: %s x%d\n", loot.Item.Name, loot.Item.Count)
+							lootMessage = fmt.Sprintf("You looted %s x%d", loot.Item.Name, loot.Item.Count)
+							lootMessageTimer = 2.0
+						}
+					}
+
 					inCombat = false
 					currentEnemy = nil
-				} else {
-					playerTurn = false
+					return
+				}
+			} else {
+				player.Health -= 5
+				fmt.Println(currentEnemy.Name, "hits Player for 5 damage")
+
+				if player.Health <= 0 {
+					fmt.Println("You died!")
+					inCombat = false
+					currentEnemy = nil
+					return
 				}
 			}
-		} else {
-			// Enemy turn
-			player.Health -= 5
-			fmt.Println("Enemy attacks player!")
-
-			if player.Health <= 0 {
-				fmt.Println("You died!")
-				// Optional: reset game or show death screen
-			}
-			playerTurn = true
+			playerTurn = !playerTurn
+			combatTimer = combatInterval
 		}
 	}
+
+	if inCombat && currentEnemy != nil && rl.Vector2Distance(player.Pos, currentEnemy.Pos) > float32(TileSize*2) {
+		fmt.Println("You escaped combat.")
+		inCombat = false
+		currentEnemy = nil
+	}
+
 	player.Update(rl.GetFrameTime())
 
 	alive := enemies[:0]
@@ -178,17 +207,20 @@ func Draw(tilemap rl.Texture2D) {
 	}
 
 	if inCombat && currentEnemy != nil {
-		msg := "Combat with " + currentEnemy.Name
-		turn := "Your turn: Press F to attack"
+		status := "Fighting " + currentEnemy.Name
+		turn := "Turn: Player"
 		if !playerTurn {
-			turn = "Enemy is attacking..."
+			turn = "Turn: " + currentEnemy.Name
 		}
-
-		rl.DrawText(msg, 10, ScreenHeight-60, 20, rl.Red)
+		rl.DrawText(status, 10, ScreenHeight-60, 20, rl.Red)
 		rl.DrawText(turn, 10, ScreenHeight-40, 20, rl.DarkGray)
 	}
 
-	rl.DrawText(fmt.Sprintf("HP: %d/%d", player.Health, player.MaxHealth), 10, 10, 20, rl.Black)
+	rl.DrawText(fmt.Sprintf("Player HP: %d", player.Health), 10, 10, 20, rl.Black)
+
+	if lootMessageTimer > 0 {
+		rl.DrawText(lootMessage, 10, ScreenHeight-90, 20, rl.DarkGreen)
+	}
 
 	rl.EndDrawing()
 }
@@ -227,6 +259,25 @@ func main() {
 		Name:      "Slime",
 		Texture:   enemyTex,
 		Frame:     rl.NewRectangle(0, 64, TileSize, TileSize),
+		LootTable: []LootEntry{
+			{
+				Item: ItemSlot{
+					Name:      "Club",
+					Count:     1,
+					Type:      "Weapon",
+					FrameRect: rl.NewRectangle(0, 256, TileSize, TileSize),
+				},
+				Chance: 0.3, // 30% chance
+			},
+			{
+				Item: ItemSlot{
+					Name:  "Coins",
+					Count: 5,
+					Type:  "Misc",
+				},
+				Chance: 0.7, // 70% chance
+			},
+		},
 	})
 
 	for !rl.WindowShouldClose() {
