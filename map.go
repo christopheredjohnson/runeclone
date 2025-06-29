@@ -41,13 +41,10 @@ func (m *Map) SetTile(x, y int, tileType int) {
 	}
 }
 
-func (m *Map) Draw() {
+func (m *Map) Draw(texture rl.Texture2D) {
 	for y := 0; y < m.Height; y++ {
 		for x := 0; x < m.Width; x++ {
-			tile := m.Tiles[y][x]
-			pos := rl.NewRectangle(float32(x*TileSize), float32(y*TileSize), TileSize, TileSize)
-			rl.DrawRectangleRec(pos, tile.Color())
-			rl.DrawRectangleLinesEx(pos, 1, rl.Black)
+			m.Tiles[y][x].Draw(texture, int32(x), int32(y))
 		}
 	}
 }

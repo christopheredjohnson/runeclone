@@ -7,7 +7,7 @@ const (
 	SpawnHeight  = 3
 	ScreenWidth  = 800
 	ScreenHeight = 600
-	TileSize     = 48
+	TileSize     = 32
 	MapWidth     = 10
 	MapHeight    = 8
 )

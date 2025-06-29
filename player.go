@@ -22,9 +22,10 @@ type Player struct {
 	GatherItem    string
 	PendingGather *Point
 	Equipment     *Equipment
+	Texture       rl.Texture2D
 }
 
-func NewPlayer(x, y float32, m *Map) Player {
+func NewPlayer(x, y float32, m *Map, texture rl.Texture2D) Player {
 	return Player{
 		Pos:       rl.NewVector2(x, y),
 		Size:      rl.NewVector2(32, 32),
@@ -34,6 +35,7 @@ func NewPlayer(x, y float32, m *Map) Player {
 		Map:       m,
 		Inventory: NewInventory(),
 		Equipment: NewEquipment(),
+		Texture:   texture,
 	}
 }
 
@@ -128,14 +130,18 @@ func (p *Player) Update(dt float32) {
 
 func (p *Player) Draw() {
 	for _, step := range p.Path {
-		rect := rl.NewRectangle(float32(step.X*TileSize), float32(step.Y*TileSize), TileSize, TileSize)
-		rl.DrawRectangleRec(rect, rl.Fade(rl.Yellow, 0.3))
-		rl.DrawRectangleLinesEx(rect, 1, rl.Orange)
 		center := rl.NewVector2(float32(step.X*TileSize+TileSize/2), float32(step.Y*TileSize+TileSize/2))
 		rl.DrawCircleV(center, 2, rl.Red)
 	}
 
-	rl.DrawRectangleV(p.Pos, p.Size, p.Color)
+	source := rl.Rectangle{
+		X:      0,
+		Y:      32,
+		Width:  TileSize,
+		Height: TileSize,
+	}
+
+	rl.DrawTextureRec(p.Texture, source, p.Pos, rl.White)
 }
 
 func (p *Player) DrawInventory(x, y int) {

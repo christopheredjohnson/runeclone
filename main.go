@@ -10,12 +10,19 @@ var (
 	showInventory bool
 	Recipes       = []Recipe{
 		{
-			Name: "Bronze Sword",
+			Name: "Sword",
 			Inputs: []ItemSlot{
 				{Name: "Ore", Count: 2},
 				{Name: "Logs", Count: 1},
 			},
-			Output: ItemSlot{Name: "Bronze Sword", Count: 1, Type: "Weapon"},
+			Output: ItemSlot{Name: "Sword", Count: 1, Type: "Weapon"},
+		},
+		{
+			Name: "Log Suit",
+			Inputs: []ItemSlot{
+				{Name: "Logs", Count: 4},
+			},
+			Output: ItemSlot{Name: "Log Suit", Count: 1, Type: "Body"},
 		},
 	}
 )
@@ -32,8 +39,9 @@ func Update() {
 
 			if slot != "" {
 				swapped := player.Equipment.Unequip(slot)
-				player.Inventory.Set(clickedIndex, ItemSlot{}) // remove old item
-				player.Equipment.Equip(slot, item)
+
+				remaining := player.Equipment.Equip(slot, item)
+				player.Inventory.Set(clickedIndex, remaining) // either empty or rest of stack
 
 				if swapped.Name != "" {
 					player.Inventory.Add(swapped)
@@ -71,11 +79,11 @@ func Update() {
 	player.Update(rl.GetFrameTime())
 }
 
-func Draw() {
+func Draw(tilemap rl.Texture2D) {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.RayWhite)
 
-	gameMap.Draw()
+	gameMap.Draw(tilemap)
 	player.Draw()
 
 	if showInventory {
@@ -127,6 +135,11 @@ func main() {
 	rl.InitWindow(ScreenWidth, ScreenHeight, "Encapsulated Player Example")
 	rl.SetTargetFPS(60)
 
+	tilemap := rl.LoadTexture("assets/tiles.png")
+	defer rl.UnloadTexture(tilemap)
+
+	characterTilemap := rl.LoadTexture("assets/rogues.png")
+	defer rl.UnloadTexture(characterTilemap)
 	gameMap = NewMap(20, 15)
 	gameMap.Generate(0.1, 0.05, 0.05)
 
@@ -134,11 +147,14 @@ func main() {
 		float32((SpawnX+SpawnWidth/2)*TileSize),
 		float32((SpawnY+SpawnHeight/2)*TileSize),
 		gameMap,
+		characterTilemap,
 	)
+
+	player.Inventory.Add(ItemSlot{Name: "Leather Body", Count: 1, Type: "Body"})
 
 	for !rl.WindowShouldClose() {
 		Update()
-		Draw()
+		Draw(tilemap)
 	}
 
 	rl.CloseWindow()
